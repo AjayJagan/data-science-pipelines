@@ -17,9 +17,6 @@ ARG SOURCE_CODE=.
 
 FROM registry.access.redhat.com/ubi9/go-toolset:1.23 AS builder
 
-ARG TARGETOS
-ARG TARGETARCH
-
 USER root
 
 RUN dnf install -y cmake clang openssl
@@ -34,14 +31,13 @@ RUN GO111MODULE=on go mod download
 # Copy the source
 COPY ${SOURCE_CODE}/ ./
 
-RUN GO111MODULE=on CGO_ENABLED=1 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} GOEXPERIMENT=strictfipsruntime go build -tags strictfipsruntime -o /bin/apiserver ./backend/src/apiserver/ && \
+RUN GO111MODULE=on CGO_ENABLED=1 GOEXPERIMENT=strictfipsruntime go build -tags strictfipsruntime -o /bin/apiserver ./backend/src/apiserver/ && \
     dnf clean all
 
 # 2. Compile preloaded pipeline samples
 FROM registry.access.redhat.com/ubi9/python-39:9.5 AS compiler
 
-ARG TARGETOS
-ARG TARGETARCH
+ARG TARGETOS TARGETARCH
 
 USER root
 RUN dnf install -y python3-setuptools jq
